@@ -1,0 +1,265 @@
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #f3f4f6;
+    color: #171717;
+    font-family:
+      -apple-system, BlinkMacSystemFont,
+      "Pretendard", "Noto Sans KR",
+      "Segoe UI", sans-serif;
+  }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px 16px 50px;
+  }
+
+  .titleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+  }
+
+  .modeSwitch {
+    display: inline-flex;
+    flex-shrink: 0;
+    padding: 3px;
+    border-radius: 999px;
+    background: #e5e7eb;
+  }
+
+  .modeSwitch button {
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 13px;
+    background: transparent;
+    color: #555;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .modeSwitch button.active {
+    background: #111;
+    color: #fff;
+  }
+
+  .modeSwitch button:focus-visible {
+    outline: 3px solid rgba(17, 17, 17, .25);
+    outline-offset: 2px;
+  }
+
+  .subtitle {
+    margin-bottom: 18px;
+    color: #666;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .label {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 5px;
+  }
+
+  .value {
+    font-size: 20px;
+    font-weight: 700;
+    word-break: keep-all;
+  }
+
+  #mapBox {
+    position: relative;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  #worldMap {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .country {
+    fill: #e6e8eb;
+    stroke: #fff;
+    stroke-width: .55;
+  }
+
+  .country.selected {
+    fill: #ffcc4d;
+    stroke: #222;
+    stroke-width: 1.4;
+  }
+
+  #loading {
+    padding: 60px 20px;
+    text-align: center;
+    color: #777;
+  }
+
+  #result {
+    display: none;
+    margin-top: 12px;
+    padding: 18px;
+    border-radius: 14px;
+    background: #fff7d6;
+    border: 1px solid #e8ca58;
+  }
+
+  #result strong {
+    font-size: 25px;
+  }
+
+  #detail {
+    margin-top: 6px;
+    color: #555;
+    line-height: 1.65;
+  }
+
+  .detailLine {
+    display: block;
+  }
+
+  #rebirthBtn {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 14px;
+    padding: 17px;
+    margin-top: 12px;
+    background: #2563eb;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  #rebirthBtn:hover {
+    background: #1d4ed8;
+  }
+
+  #rebirthBtn:active {
+    transform: translateY(1px);
+  }
+
+  .bottom {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .history {
+    margin-top: 7px;
+    line-height: 1.7;
+    word-break: keep-all;
+  }
+
+  .note {
+    margin-top: 14px;
+    color: #777;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .updatedAt {
+    margin-top: 4px;
+  }
+
+  .creatorActions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  #supportBtn,
+  #creatorXLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    min-width: 190px;
+    height: 40px;
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #e5e7eb;
+    color: #888;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    overflow: visible;
+  }
+
+  #supportBtn:hover,
+  #creatorXLink:hover {
+    background: #d1d5db;
+    color: #666;
+  }
+
+  #supportBtn.celebrating {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  #supportBtn.celebrating .supportText {
+    display: inline-block;
+    font-size: 56px;
+    line-height: 1;
+  }
+
+  .pinOuter {
+    fill: rgba(255, 80, 60, .2);
+    stroke: #e53625;
+    stroke-width: 2;
+  }
+
+  .pinInner {
+    fill: #e53625;
+  }
+
+  @media (max-width: 700px) {
+    .titleRow {
+      flex-wrap: wrap;
+    }
+
+    .stats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .bottom {
+      grid-template-columns: 1fr;
+    }
+
+    h1 {
+      font-size: 23px;
+    }
+  }

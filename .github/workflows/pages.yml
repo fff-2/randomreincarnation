@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만. 진행 중인 배포는 취소하지 않는다.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: index.html이 빌더 산출물과 일치하는지 확인
+        run: |
+          cp index.html /tmp/committed.html
+          python3 tools/build.py
+          if ! diff -q /tmp/committed.html index.html; then
+            echo "::error::index.html이 tools/build.py의 산출물과 다릅니다. 'python3 tools/build.py'를 실행한 뒤 다시 커밋하세요."
+            exit 1
+          fi
+          echo "index.html 재현성 확인 완료"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
