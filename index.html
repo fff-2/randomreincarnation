@@ -729,6 +729,42 @@
     overflow-wrap: anywhere;
   }
 
+
+  /* ===== 결과 등장 이펙트 ===== */
+  /* 리롤할 때마다 결과가 "새로 도착했다"는 신호를 준다.
+     재생을 다시 트리거하려면 JS에서 클래스를 떼고 reflow 후 다시 붙인다. */
+  @keyframes resultPop {
+    from { opacity: 0; transform: translateY(12px) scale(.985); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @keyframes silPop {
+    0%   { opacity: 0; transform: scale(.62) rotate(-7deg); }
+    65%  { opacity: 1; transform: scale(1.07) rotate(2.5deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+
+  @keyframes glowRing {
+    from { box-shadow: 0 0 0 0 rgba(37, 99, 235, .38); }
+    to   { box-shadow: 0 0 0 14px rgba(37, 99, 235, 0); }
+  }
+
+  .pop { animation: resultPop .4s cubic-bezier(.2, .8, .2, 1) both; }
+
+  #creatureCard.pop { animation: resultPop .4s cubic-bezier(.2, .8, .2, 1) both; }
+  #creatureCard.pop .silBox     { animation: glowRing .7s ease-out both; }
+  #creatureCard.pop .silBox svg { animation: silPop .52s cubic-bezier(.2, .9, .2, 1) both; }
+
+  /* 맨 위로 올릴 때 화면 끝에 붙지 않도록 */
+  #creatureCard, .statPanel { scroll-margin-top: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pop,
+    #creatureCard.pop,
+    #creatureCard.pop .silBox,
+    #creatureCard.pop .silBox svg { animation: none; }
+  }
+
   #rebirthBtn, .secondaryBtn, .modeSwitch button, #supportBtn {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -1251,8 +1287,7 @@ function setCreatureMode(mode) {
   document.getElementById("resultCreature").textContent = "?";
   document.getElementById("resultChance").textContent = "—";
   document.getElementById("creatureCard").classList.remove("shown");
-  document.getElementById("samplePanel").classList.remove("shown");
-  document.getElementById("questPanel").classList.remove("shown");
+  hidePanels();
   clearCountry();
 }
 
@@ -1269,6 +1304,42 @@ function setCountryMode(mode) {
   document.getElementById("countrySubtitle").textContent = isBirth
     ? "2026년 전 세계에서 태어나는 아기 한 명 기준"
     : "2026년 세계 인구 한 명 기준";
+}
+
+
+/* ===================== 결과 강조: 이펙트 + 맨 위로 스크롤 ===================== */
+const PANEL_IDS = ["questPanel", "samplePanel"];
+
+function hidePanels(...keep) {
+  for (const id of PANEL_IDS) {
+    if (!keep.includes(id)) document.getElementById(id).classList.remove("shown");
+  }
+}
+
+const prefersReducedMotion = () =>
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* 같은 애니메이션을 다시 재생시키려면 클래스를 떼고 reflow를 강제한 뒤 다시 붙여야 한다. */
+function playPop(el) {
+  if (prefersReducedMotion()) return;
+  el.classList.remove("pop");
+  void el.offsetWidth;
+  el.classList.add("pop");
+}
+
+function scrollToTop(el) {
+  if (typeof el.scrollIntoView !== "function") return;
+  el.scrollIntoView({
+    behavior: prefersReducedMotion() ? "auto" : "smooth",
+    block: "start"
+  });
+}
+
+/* 결과를 화면 맨 위로 올리고 이펙트를 재생한다 */
+function highlight(el) {
+  playPop(el);
+  scrollToTop(el);
 }
 
 /* ===================== 환생 ===================== */
@@ -1300,9 +1371,14 @@ function showResult(creature, attempts = 1, note = "") {
   history.push(label + note);
   if (history.length > 15) history.shift();
   document.getElementById("history").textContent = history.join(" → ");
+
+  /* 이번 생의 설명을 화면 맨 위로 — 리롤과 "인간 될 때까지" 모두 동일하게 */
+  highlight(document.getElementById("creatureCard"));
 }
 
 function rebirth() {
+  /* 새로 뽑으면 이전 통계 패널은 더 이상 이번 생과 무관하므로 치운다 */
+  hidePanels();
   showResult(weightedPick(CREATURES, creatureWeight(), creatureTotal()));
 }
 
@@ -1366,7 +1442,12 @@ function renderSampling(result) {
     + countryText;
 
   renderBarList("sampleBars", "sampleTail", rows, n);
-  document.getElementById("samplePanel").classList.add("shown");
+
+  /* "인간 될 때까지" 결과는 이번 샘플링과 무관하므로 치우고, 샘플링 결과를 맨 위로 */
+  hidePanels("samplePanel");
+  const panel = document.getElementById("samplePanel");
+  panel.classList.add("shown");
+  highlight(panel);
 }
 
 /* 순위 막대 목록 — 실측(막대)과 기대(눈금)를 하나의 축에 함께 올린다.
@@ -1510,11 +1591,18 @@ function renderQuest(result) {
     : "안전 상한(" + cap.toLocaleString("ko-KR") + "번)에 걸려 중단했습니다.";
 
   renderBarList("questBars", "questTail", rows, attempts);
-  document.getElementById("questPanel").classList.add("shown");
 
-  /* 마지막 결과를 메인 카드에 반영 — 소모한 추첨 횟수 전부를 환생 횟수에 더한다 */
+  /* 샘플링 결과는 이번 추첨과 무관하므로 치운다 */
+  hidePanels("questPanel");
+  const panel = document.getElementById("questPanel");
+  panel.classList.add("shown");
+
+  /* 마지막 결과를 메인 카드에 반영 — 소모한 추첨 횟수 전부를 환생 횟수에 더한다.
+     showResult가 생물 카드를 맨 위로 올리므로 여기서 별도 스크롤은 하지 않는다. */
   if (found) {
     showResult(found, attempts, " [" + attempts.toLocaleString("ko-KR") + "번째]");
+  } else {
+    highlight(panel);   /* 상한 실패 시엔 카드가 안 바뀌므로 패널을 올린다 */
   }
 }
 
