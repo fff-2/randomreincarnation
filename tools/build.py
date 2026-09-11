@@ -515,7 +515,7 @@ EXTRA_CSS = r"""
   #creatureCard.pop .silBox svg { animation: silPop .52s cubic-bezier(.2, .9, .2, 1) both; }
 
   /* 맨 위로 올릴 때 화면 끝에 붙지 않도록 */
-  #creatureCard, .statPanel { scroll-margin-top: 12px; }
+  #statsRow, .statPanel { scroll-margin-top: 12px; }
 
   @media (prefers-reduced-motion: reduce) {
     .pop,
@@ -546,7 +546,7 @@ BODY = r"""
 
   <div class="oddsNote" id="oddsNote"></div>
 
-  <div class="stats">
+  <div class="stats" id="statsRow">
     <div class="card">
       <div class="label" id="totalLabel">후보 개체수 총합</div>
       <div class="value" id="totalValue">—</div>
@@ -1068,10 +1068,11 @@ function scrollToTop(el) {
   });
 }
 
-/* 결과를 화면 맨 위로 올리고 이펙트를 재생한다 */
-function highlight(el) {
-  playPop(el);
-  scrollToTop(el);
+/* 이펙트를 재생하고 화면 맨 위로 올린다.
+   리롤에서는 이펙트는 생물 카드에, 스크롤은 그 위의 통계 행에 걸린다. */
+function highlight(popEl, scrollEl = popEl) {
+  playPop(popEl);
+  scrollToTop(scrollEl);
 }
 
 /* ===================== 환생 ===================== */
@@ -1104,8 +1105,10 @@ function showResult(creature, attempts = 1, note = "") {
   if (history.length > 15) history.shift();
   document.getElementById("history").textContent = history.join(" → ");
 
-  /* 이번 생의 설명을 화면 맨 위로 — 리롤과 "인간 될 때까지" 모두 동일하게 */
-  highlight(document.getElementById("creatureCard"));
+  /* 이펙트는 생물 카드에, 스크롤은 그 바로 위의 통계 행(이번 생·확률·환생 횟수)에.
+     리롤과 "인간 될 때까지" 모두 동일하게 동작한다. */
+  highlight(document.getElementById("creatureCard"),
+            document.getElementById("statsRow"));
 }
 
 function rebirth() {
