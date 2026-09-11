@@ -242,10 +242,10 @@ EXTRA_CSS = r"""
     #supportBtn, #creatorXLink { flex: 1 1 140px; min-width: 0; min-height: 44px; }
 
     .actionRow { flex-direction: column; }
-    .actionRow #rebirthBtn, #sampleBtn { flex: 1 1 auto; min-height: 52px; }
+    .secondaryBtn { flex: 1 1 auto; min-height: 48px; }
     .keyHint { display: none; }          /* 물리 키보드가 없는 환경 */
 
-    #samplePanel { padding: 14px; }
+    .statPanel { padding: 14px; }
     .heroValue { font-size: 38px; }
 
     /* 막대 행을 2단으로 접는다: 이름 위, 막대+숫자 아래 */
@@ -274,25 +274,24 @@ EXTRA_CSS = r"""
     margin-top: 12px;
   }
 
-  .actionRow #rebirthBtn { flex: 2 1 0; margin-top: 0; }
-
-  #sampleBtn {
+  .secondaryBtn {
     flex: 1 1 0;
+    min-width: 0;
     border: 1px solid #cbd5e1;
     border-radius: 14px;
-    padding: 17px 12px;
+    padding: 15px 12px;
     background: #fff;
     color: #334155;
     font: inherit;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     word-break: keep-all;
   }
 
-  #sampleBtn:hover { background: #f1f5f9; }
-  #sampleBtn:active { transform: translateY(1px); }
-  #sampleBtn[disabled] { opacity: .55; cursor: progress; }
+  .secondaryBtn:hover { background: #f1f5f9; }
+  .secondaryBtn:active { transform: translateY(1px); }
+  .secondaryBtn[disabled] { opacity: .55; cursor: progress; }
 
   .keyHint {
     margin-top: 8px;
@@ -317,8 +316,8 @@ EXTRA_CSS = r"""
     text-align: center;
   }
 
-  /* ===== 1,000번 샘플링 패널 ===== */
-  #samplePanel {
+  /* ===== 통계 패널 (샘플링 · 인간 될 때까지) ===== */
+  .statPanel {
     display: none;
     margin-top: 12px;
     padding: 18px;
@@ -327,7 +326,7 @@ EXTRA_CSS = r"""
     border-radius: 16px;
   }
 
-  #samplePanel.shown { display: block; }
+  .statPanel.shown { display: block; }
 
   .sampleHead {
     display: flex;
@@ -474,7 +473,13 @@ EXTRA_CSS = r"""
     word-break: keep-all;
   }
 
-  .sampleNote {
+  /* 인간 될 때까지 — 횟수가 주제라 히어로 색을 달리한다 */
+  #questPanel .heroBox   { background: #fff7d6; border-color: #e8ca58; }
+  #questPanel .heroLabel,
+  #questPanel .heroFoot  { color: #8a6d0b; }
+  #questPanel .heroValue { color: #6b5307; }
+
+  .statNote {
     margin-top: 12px;
     color: #999;
     font-size: 12px;
@@ -483,7 +488,7 @@ EXTRA_CSS = r"""
     overflow-wrap: anywhere;
   }
 
-  #rebirthBtn, #sampleBtn, .modeSwitch button, #supportBtn {
+  #rebirthBtn, .secondaryBtn, .modeSwitch button, #supportBtn {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
@@ -564,14 +569,39 @@ BODY = r"""
     </div>
   </div>
 
+  <button id="rebirthBtn" type="button">🎲 랜덤으로 다시 태어나기</button>
+
   <div class="actionRow">
-    <button id="rebirthBtn" type="button">🎲 랜덤으로 다시 태어나기</button>
-    <button id="sampleBtn" type="button">📊 1,000번 샘플링</button>
+    <button id="questBtn" class="secondaryBtn" type="button">🔁 인간 될 때까지 뽑기</button>
+    <button id="sampleBtn" class="secondaryBtn" type="button">📊 1,000번 샘플링</button>
   </div>
 
   <div class="keyHint"><kbd>R</kbd> 키를 누르면 바로 다시 태어납니다.</div>
 
-  <div id="samplePanel">
+  <div id="questPanel" class="statPanel">
+    <div class="sampleHead">
+      <div class="sampleTitle" id="questTitle"></div>
+      <div class="sampleSub" id="questSub"></div>
+    </div>
+
+    <div class="heroBox">
+      <div class="heroLabel">인간이 되기까지 뽑은 횟수</div>
+      <div class="heroValue" id="questHero">—</div>
+      <div class="heroFoot" id="questHeroFoot"></div>
+    </div>
+
+    <div class="chartLegend">
+      <div class="legendItem"><span class="legendBar"></span>실측 (인간이 되기 전까지 뽑힌 횟수)</div>
+      <div class="legendItem"><span class="legendTick"></span>기대 확률</div>
+    </div>
+
+    <div class="barList" id="questBars"></div>
+    <div class="barTail" id="questTail"></div>
+
+    <div class="statNote" id="questNote"></div>
+  </div>
+
+  <div id="samplePanel" class="statPanel">
     <div class="sampleHead">
       <div class="sampleTitle" id="sampleTitle"></div>
       <div class="sampleSub" id="sampleSub"></div>
@@ -591,7 +621,7 @@ BODY = r"""
     <div class="barList" id="sampleBars"></div>
     <div class="barTail" id="sampleTail"></div>
 
-    <div class="sampleNote">
+    <div class="statNote">
       막대(실측)와 눈금(기대)은 하나의 같은 축 위에 있습니다 — 실측·기대 중 큰 값이 축의 100%입니다.
       막대가 눈금보다 짧으면 기대보다 덜 나온 것, 길면 더 나온 것입니다. 모든 값은 오른쪽에 숫자로도 적어 두었습니다.
       1,000회는 표본이 작아 드문 종이 0회로 나오는 것은 정상입니다.
@@ -954,6 +984,7 @@ function setCreatureMode(mode) {
   document.getElementById("resultChance").textContent = "—";
   document.getElementById("creatureCard").classList.remove("shown");
   document.getElementById("samplePanel").classList.remove("shown");
+  document.getElementById("questPanel").classList.remove("shown");
   clearCountry();
 }
 
@@ -976,9 +1007,10 @@ function setCountryMode(mode) {
 let rolls = 0;
 const history = [];
 
-function rebirth() {
-  const creature = weightedPick(CREATURES, creatureWeight(), creatureTotal());
-  rolls++;
+/* 뽑힌 생물을 화면에 반영한다.
+   attempts는 이 결과에 실제로 소모된 추첨 횟수 (인간 될 때까지 모드에서 1보다 커진다). */
+function showResult(creature, attempts = 1, note = "") {
+  rolls += attempts;
 
   const chance = creatureChance(creature);
 
@@ -997,9 +1029,13 @@ function rebirth() {
     label += "(" + country.name + ")";
   }
 
-  history.push(label);
+  history.push(label + note);
   if (history.length > 15) history.shift();
   document.getElementById("history").textContent = history.join(" → ");
+}
+
+function rebirth() {
+  showResult(weightedPick(CREATURES, creatureWeight(), creatureTotal()));
 }
 
 document.getElementById("rebirthBtn").addEventListener("click", rebirth);
@@ -1061,14 +1097,19 @@ function renderSampling(result) {
     "기대값 " + expectedHumans.toFixed(2) + "회 (" + formatProbability(humanRow.expected) + ")."
     + countryText;
 
-  /* 순위 막대 — 실측과 기대를 하나의 축에 함께 올린다.
-     축 최댓값을 둘 중 큰 값으로 잡아야 1위 막대가 기대치보다 낮을 때도 눈금이 축 안에 남는다. */
+  renderBarList("sampleBars", "sampleTail", rows, n);
+  document.getElementById("samplePanel").classList.add("shown");
+}
+
+/* 순위 막대 목록 — 실측(막대)과 기대(눈금)를 하나의 축에 함께 올린다.
+   축 최댓값을 둘 중 큰 값으로 잡아야 1위 막대가 기대치보다 낮을 때도 눈금이 축 안에 남는다. */
+function renderBarList(barsId, tailId, rows, n) {
   const maxExpected = Math.max(...rows.map(r => r.expected * n));
   const axisMax     = Math.max(1, rows[0].hits, maxExpected);
   const shown       = rows.filter(r => r.hits > 0);
   const zeroed      = rows.filter(r => r.hits === 0);
 
-  document.getElementById("sampleBars").replaceChildren(...shown.map(r => {
+  document.getElementById(barsId).replaceChildren(...shown.map(r => {
     const row = document.createElement("div");
     row.className = "barRow";
 
@@ -1106,7 +1147,7 @@ function renderSampling(result) {
   }));
 
   /* 0회 종은 한 줄로 접는다 */
-  const tail = document.getElementById("sampleTail");
+  const tail = document.getElementById(tailId);
   if (zeroed.length) {
     tail.style.display = "block";
     tail.textContent = "0회 " + zeroed.length + "종 — "
@@ -1115,8 +1156,6 @@ function renderSampling(result) {
     tail.style.display = "none";
     tail.textContent = "";
   }
-
-  document.getElementById("samplePanel").classList.add("shown");
 }
 
 const sampleBtn = document.getElementById("sampleBtn");
@@ -1137,6 +1176,98 @@ function sample() {
 }
 
 sampleBtn.addEventListener("click", sample);
+
+/* ===================== 인간이 나올 때까지 뽑기 ===================== */
+/* 실제 개체수 기준 인간 확률은 0.064% — 기대 1,558번.
+   상한 없이 돌리면 최악의 경우 브라우저가 멈추므로 안전 상한을 둔다.
+   5만 번에서 못 찾을 확률은 (1-p)^50000 ≈ 3×10⁻¹⁴ 로 사실상 0이다. */
+const QUEST_CAP = 50000;
+
+function runQuest(cap = QUEST_CAP) {
+  const weightFn = creatureWeight();
+  const total    = creatureTotal();
+  const hits     = new Map(CREATURES.map(c => [c.id, 0]));
+
+  let attempts = 0;
+  let found = null;
+
+  while (attempts < cap) {
+    const c = weightedPick(CREATURES, weightFn, total);
+    attempts++;
+    hits.set(c.id, hits.get(c.id) + 1);
+    if (c.id === "human") { found = c; break; }
+  }
+
+  const rows = CREATURES
+    .map(c => ({ c, hits: hits.get(c.id), expected: creatureChance(c) }))
+    .sort((a, b) => b.hits - a.hits || b.expected - a.expected);
+
+  return { attempts, found, rows, cap };
+}
+
+function renderQuest(result) {
+  const { attempts, found, rows, cap } = result;
+  const isReal = creatureMode === "real";
+  const p = creatureChance(human);
+
+  document.getElementById("questTitle").textContent = found
+    ? "🔁 인간이 될 때까지 — " + attempts.toLocaleString("ko-KR") + "번 걸렸습니다"
+    : "🔁 인간이 될 때까지 — 상한까지 실패";
+
+  document.getElementById("questSub").textContent =
+    (isReal ? "실제 개체수 기준" : "로그 보정 기준")
+    + " · 국가는 " + (countryMode === "births" ? "출생아" : "인구") + " 기준";
+
+  document.getElementById("questHero").textContent =
+    attempts.toLocaleString("ko-KR") + "번" + (found ? "" : "+");
+
+  /* 기하분포: 평균 1/p, 중앙값 ln2/p. 둘을 같이 보여야 "운이 좋았나"를 판단할 수 있다. */
+  const mean   = 1 / p;
+  const median = Math.log(2) / Math.log(1 / (1 - p));
+
+  document.getElementById("questHeroFoot").textContent = found
+    ? "인간 확률 " + formatProbability(p) + " · 평균 "
+      + Math.round(mean).toLocaleString("ko-KR") + "번, 중앙값 "
+      + Math.round(median).toLocaleString("ko-KR") + "번 걸립니다. "
+      + (attempts <= median
+          ? "중앙값보다 빨랐습니다 — 운이 좋은 절반에 속합니다."
+          : "중앙값보다 오래 걸렸습니다.")
+    : cap.toLocaleString("ko-KR") + "번을 뽑아도 인간이 나오지 않았습니다. "
+      + "안전 상한에서 멈췄습니다 — 다시 눌러보세요.";
+
+  document.getElementById("questNote").textContent = found
+    ? "인간이 되기 직전까지 당신은 위의 것들이었습니다. 막대(실측)와 눈금(기대)은 "
+      + attempts.toLocaleString("ko-KR") + "번을 기준으로 같은 축 위에 있습니다. "
+      + "인간은 마지막 1회로 끝나므로 기대 눈금도 1 근처에 놓입니다."
+    : "안전 상한(" + cap.toLocaleString("ko-KR") + "번)에 걸려 중단했습니다.";
+
+  renderBarList("questBars", "questTail", rows, attempts);
+  document.getElementById("questPanel").classList.add("shown");
+
+  /* 마지막 결과를 메인 카드에 반영 — 소모한 추첨 횟수 전부를 환생 횟수에 더한다 */
+  if (found) {
+    showResult(found, attempts, " [" + attempts.toLocaleString("ko-KR") + "번째]");
+  }
+}
+
+const questBtn = document.getElementById("questBtn");
+
+function quest() {
+  questBtn.disabled = true;
+  questBtn.textContent = "인간을 찾는 중…";
+
+  /* 버튼 상태가 먼저 그려지도록 한 프레임 넘긴다 */
+  requestAnimationFrame(() => {
+    try {
+      renderQuest(runQuest());
+    } finally {
+      questBtn.disabled = false;
+      questBtn.textContent = "🔁 인간 될 때까지 뽑기";
+    }
+  });
+}
+
+questBtn.addEventListener("click", quest);
 
 /* ===================== 키보드 단축키 ===================== */
 document.addEventListener("keydown", event => {
